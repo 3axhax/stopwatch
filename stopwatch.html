@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stopwatch</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+    <div class="text-center">
+        <h1>Stopwatch</h1>
+    </div>
+    <div class="row">
+        <div class="text-right col-md-4">
+            <button class="btn btn-success" id="start_stop">Start</button>
+        </div>
+        <div class="text-center col-md-4">
+            <h4 id="time">
+                <div class="row">
+                    <div class="col-md-6 text-right">0h-00m-00s</div>
+                    <div class="col-md-6 text-left">:000ms-000us</div>
+                </div>
+            </h4>
+        </div>
+        <div class="text-left col-md-4">
+            <button class="btn btn-warning" id="reset">Reset</button>
+        </div>
+    </div>
+</div>
+</body>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<style>
+    #time > div.row > div.text-right {
+        padding-right: 0;
+    }
+    #time > div.row > div.text-left {
+        padding-left: 0;
+    }
+</style>
+<script>
+
+    var Stopwatch = function () {
+
+        var self = this;
+
+        this.button = {
+            start_stop: $('#start_stop'),
+            reset: $('#reset'),
+        };
+        this.time = $('#time');
+
+        this.fillZero = function (time, is_two) {
+            if (is_two === true) {
+                if (time < 10) return '0' + time;
+                return time;
+            }
+            else {
+                if (time >= 100) return time;
+                if (time >= 10) return '0' + time;
+                return '00' + time;
+            }
+        };
+
+        this.win_now = window.performance.now();
+
+        this.dif = 0;
+
+        this.status = 'Stop';
+
+        this.timer_id = 0;
+
+        this.write_time = function (time_now) {
+            let hours = Math.floor(time_now/(60*60*1000));
+            let minutes = self.fillZero(Math.floor((time_now - hours*60*60*1000)/(60*1000)), true);
+            let seconds = self.fillZero(Math.floor((time_now - hours*60*60*1000 - minutes*60*1000)/1000), true);
+            let micro_sec = self.fillZero(Math.floor((time_now - Math.floor(time_now)) * 1000));
+            let milli_sec = self.fillZero(Math.floor(time_now - Math.floor(time_now/1000)*1000));
+            let time = '<div class="row">\n' +
+                '                    <div class="col-md-6 text-right">'+hours+'h-'+minutes+'m-'+seconds+'s</div>\n' +
+                '                    <div class="col-md-6 text-left">:'+milli_sec+'ms-'+micro_sec+'us</div>\n' +
+                '                </div>';
+            self.time.html(time);
+        };
+
+        this.button.start_stop.on('click', function () {
+            self.button.start_stop.html(self.status);
+            if (self.status === 'Stop') {
+                self.win_now = window.performance.now() - self.dif;
+                self.timer_id = setInterval(function() {
+                    self.write_time(window.performance.now() - self.win_now);
+                }, 4);
+                self.button.start_stop.addClass('btn-danger');
+                self.button.start_stop.removeClass('btn-success');
+                self.status = 'Start';
+                self.button.reset.prop('disabled', true);
+            }
+            else if (self.status === 'Start') {
+                self.dif = window.performance.now() - self.win_now;
+                clearInterval(self.timer_id);
+                self.button.start_stop.removeClass('btn-danger');
+                self.button.start_stop.addClass('btn-success');
+                self.status = 'Stop';
+                self.button.reset.prop('disabled', false);
+            }
+        });
+
+        this.button.reset.on('click', function () {
+            self.dif = 0;
+            self.win_now = window.performance.now();
+            self.time.html(
+                '<div class="row">\n' +
+                '                    <div class="col-md-6 text-right">0h-00m-00s</div>\n' +
+                '                    <div class="col-md-6 text-left">:000ms-000us</div>\n' +
+                '                </div>'
+            );
+        });
+
+    };
+
+    stopwatch = new Stopwatch();
+
+</script>
+</html>
